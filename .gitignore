@@ -1,5 +1,6 @@
 .DS_Store
 iot-go
+auth
 psql_db_setup.sql
 dbconf.json
 utils/*.txt

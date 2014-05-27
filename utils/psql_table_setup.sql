@@ -49,6 +49,7 @@ CREATE TABLE users
 (
 	id				SERIAL PRIMARY KEY, 
 	name			text,
-	password		text, 
+	key				text,
+	permissions		integer,
 	created_at		timestamp
 );
