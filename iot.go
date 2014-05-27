@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	auth "github.com/abbot/go-http-auth"
 	"github.com/bitly/go-simplejson"
 	"io/ioutil"
 	"net/http"
@@ -13,8 +12,12 @@ func Secret(user, realm string) string {
 	return getPassword(user)
 }
 
-func iotHandler(w http.ResponseWriter, r *auth.AuthenticatedRequest) {
-	fmt.Println("Handling IoT " + r.Username)
+func iotHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Handling IoT")
+    if !checkAuth(r) {
+		badAuth(w)
+		return
+	}
 	if r.Method == "POST" {
 		fmt.Println("Post")
 		// receive posted data

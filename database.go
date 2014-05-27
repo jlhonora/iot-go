@@ -62,14 +62,34 @@ func dbclose() error {
 func getPassword(username string) string {
 	var password string
 	log.Printf("Querying password for " + username)
-	err := DB.QueryRow("SELECT password FROM users WHERE name = $1", username).Scan(&password)
+	err := DB.QueryRow("SELECT key FROM users WHERE name = $1", username).Scan(&password)
 	switch {
 	case err == sql.ErrNoRows:
 		log.Printf("No user with that ID.")
+		break
 	case err != nil:
 		log.Fatal(err)
+		break
 	default:
 		fmt.Printf("Password is %s\n", password)
+		break
 	}
 	return password
+}
+
+func checkKey(key string) bool {
+	log.Printf("Querying key " + key);
+	var name string
+	err := DB.QueryRow("SELECT name FROM users WHERE key = $1", key).Scan(&name)
+	switch {
+	case err == sql.ErrNoRows:
+		log.Printf("Not found")
+		return false
+	case err != nil:
+		log.Fatal(err)
+		return false
+	default:
+		log.Printf("OK")
+		return true
+	}
 }
