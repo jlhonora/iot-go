@@ -14,6 +14,6 @@ func checkAuth(r *http.Request, method string) bool {
 
 func badAuth(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusUnauthorized)
-	renderResponse(w, "error", map[string]interface{}{"response": "Bad Auth"})
+	renderResponse(w, "error", []byte(`{"response": "Bad Auth"}`))
 	return
 }

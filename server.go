@@ -9,6 +9,7 @@ import (
 func main() {
 	dbinit()
 	defer dbclose()
-	http.HandleFunc("/api/v1/iot", iotHandler)
+	http.Handle("/api/v1/iot/", getIotRouter())
+	http.Handle("/api/v1/iot", getIotRouter())
 	log.Fatal(http.ListenAndServe(":7654", nil))
 }
