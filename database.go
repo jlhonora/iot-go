@@ -77,8 +77,8 @@ func getPassword(username string) string {
 	return password
 }
 
-func checkKey(key string) bool {
-	log.Printf("Querying key " + key);
+func checkKey(key string, method string) bool {
+	log.Printf("Querying key " + key + " with method " + method)
 	var name string
 	err := DB.QueryRow("SELECT name FROM users WHERE key = $1", key).Scan(&name)
 	switch {
