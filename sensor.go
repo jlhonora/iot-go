@@ -2,9 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"io"
 	"fmt"
 	"time"
+	"database/sql"
+	"strings"
 )
 
 type Sensor struct {
@@ -15,17 +16,20 @@ type Sensor struct {
     UpdatedAt   time.Time	`json:"updated_at"`
 }
 
-func DecodeSensor(r io.Reader) (x *Sensor, err error) {
-    x = new(Sensor)
-    err = json.NewDecoder(r).Decode(x)
-    return
-}
-
-// Queries the database for github activities and transforms them
-// to JSON format
-func getSensorsFromDb() ([]Sensor, error) {
+// Queries the database for sensors and transforms them
+// to struct format
+func getSensorsFromDb(sensor_ids []uint64) ([]Sensor, error) {
 	// Select all sensors
-	rows, err := DB.Query("SELECT * FROM sensors LIMIT 50")
+	var rows * sql.Rows
+	var err error
+	if sensor_ids == nil {
+		rows, err = DB.Query("SELECT * FROM sensors LIMIT 50")
+	} else if len(sensor_ids) == 1 {
+		rows, err = DB.Query("SELECT * FROM sensors WHERE id=$1", sensor_ids[0])
+	} else {
+		sql := "SELECT * FROM sensors WHERE id in (?" + strings.Repeat(",?", len(sensor_ids)-1) + ")"
+		rows, err = DB.Query(sql, sensor_ids)
+	}
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -47,9 +51,29 @@ func getSensorsFromDb() ([]Sensor, error) {
 	return sensors, err
 }
 
+func getSensorFromDb(sensor_id uint64) (Sensor, error) {
+	sensor_ids := []uint64{sensor_id}
+	sensor_ids[0] = sensor_id
+	sensors, err := getSensorsFromDb(sensor_ids)
+	var sensor Sensor
+	if err != nil {
+		return sensor, err
+	}
+	sensor = sensors[0]
+	return sensor, nil
+}
 
-func getSensorsJson() []byte {
-	sensors, err := getSensorsFromDb()
+func getSensorJson(sensor_id uint64) []byte {
+	sensor, err := getSensorFromDb(sensor_id)
+	if err != nil {
+		fmt.Println(err)
+	}
+	result, err := json.Marshal(map[string]interface{}{"sensors": sensor})
+	return result
+}
+
+func getSensorsJson(sensor_ids []uint64) []byte {
+	sensors, err := getSensorsFromDb(sensor_ids)
 	if err != nil {
 		fmt.Println(err)
 	}

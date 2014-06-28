@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
+	"strconv"
 )
 
 func Secret(user, realm string) string {
@@ -24,6 +25,7 @@ func getIotRouter() *mux.Router {
 	s.Path("/").HandlerFunc(iotHandler)
 	s.Path("/sensors").HandlerFunc(sensorsHandler)
 	s.Path("/sensors/{id:[0-9]+}").HandlerFunc(sensorHandler)
+	s.Path("/sensors/{id:[0-9]+}/measurements").HandlerFunc(sensorMeasurementsHandler)
 
 	return r
 }
@@ -105,15 +107,32 @@ func sensorsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Handling sensors")
 	if r.Method == "GET" {
 		fmt.Println("Get")
-		renderOk(w, getSensorsJson())
+		renderOk(w, getSensorsJson(nil))
 	} else {
 		renderError(w, []byte(`{"error": "Not supported"}`))
 	}
 }
 
+func sensorMeasurementsHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Handling sensor measurements")
+	vars := mux.Vars(r)
+	sensor_id, err := strconv.ParseUint(vars["id"], 10, 0)
+	if err != nil {
+		renderError(w, nil)
+		return
+	}
+	fmt.Println("Got id: ", sensor_id)
+	renderOk(w, getMeasurementsJson(sensor_id))
+}
+
 func sensorHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Handling sensor")
 	vars := mux.Vars(r)
-	fmt.Println("Got id: " + vars["id"])
-	renderOk(w, nil)
+	sensor_id, err := strconv.ParseUint(vars["id"], 10, 0)
+	if err != nil {
+		renderError(w, nil)
+		return
+	}
+	fmt.Println("Got id: ", sensor_id)
+	renderOk(w, getSensorJson(sensor_id))
 }
