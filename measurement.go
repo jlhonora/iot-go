@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+	"strconv"
+	"database/sql"
 )
 
 type Measurement struct {
@@ -13,11 +15,45 @@ type Measurement struct {
     CreatedAt   time.Time	`json:"created_at"`
 }
 
+const (
+	QUERY_LIMIT = 10000
+)
+
+func getQueryFromParams(sensor_id uint64, interval string) string {
+	if interval == "" {
+		return "SELECT * FROM measurements WHERE sensor_id=$1 ORDER BY created_at DESC LIMIT " + strconv.Itoa(QUERY_LIMIT)
+	}
+	if interval == "peek" {
+		return "SELECT * FROM measurements WHERE sensor_id=$1 ORDER BY created_at DESC LIMIT 1"
+	}
+	return `SELECT diff.period, sum(diff.result) FROM (` +
+			`SELECT ` +
+			`date_trunc($2, interm.created_at + interval '6 hours') AS period, ` +
+			`interm.value - lag(interm.value, 1, CAST(0 AS real)) OVER (ORDER BY interm.id) AS result ` +
+			`FROM ` +
+			`(` +
+				`SELECT * ` +
+				`FROM measurements ` +
+				`WHERE sensor_id=$1 ` +
+			`) interm ` +
+			`) diff ` +
+			`GROUP BY diff.period ` +
+			`ORDER BY period LIMIT ` + strconv.Itoa(QUERY_LIMIT)
+}
+
+func getQueryResultsFromParams(sensor_id uint64, interval string) (*sql.Rows, error) {
+	sql := getQueryFromParams(sensor_id, interval)
+	fmt.Println(sql)
+	if interval == "" {
+		return DB.Query(sql, sensor_id)
+	}
+	return DB.Query(sql, sensor_id, interval)
+}
+
 // Queries the database for github activities and transforms them
 // to JSON format
-func getMeasurementsFromDb(sensor_id uint64) ([]Measurement, error) {
-	// Select all measurements
-	rows, err := DB.Query("SELECT * FROM measurements WHERE sensor_id=$1 ORDER BY created_at DESC LIMIT 10000", sensor_id)
+func getMeasurementsFromDb(sensor_id uint64, interval string) ([]Measurement, error) {
+	rows, err := getQueryResultsFromParams(sensor_id, interval)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -40,8 +76,8 @@ func getMeasurementsFromDb(sensor_id uint64) ([]Measurement, error) {
 }
 
 
-func getMeasurementsJson(sensor_id uint64) []byte {
-	measurements, err := getMeasurementsFromDb(sensor_id)
+func getMeasurementsJson(sensor_id uint64, interval string) []byte {
+	measurements, err := getMeasurementsFromDb(sensor_id, interval)
 	if err != nil {
 		fmt.Println(err)
 	}

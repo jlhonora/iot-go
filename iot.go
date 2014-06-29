@@ -26,6 +26,7 @@ func getIotRouter() *mux.Router {
 	s.Path("/sensors").HandlerFunc(sensorsHandler)
 	s.Path("/sensors/{id:[0-9]+}").HandlerFunc(sensorHandler)
 	s.Path("/sensors/{id:[0-9]+}/measurements").HandlerFunc(sensorMeasurementsHandler)
+	s.Queries("interval", "(peek|minute|hour|day)")
 
 	return r
 }
@@ -122,7 +123,9 @@ func sensorMeasurementsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Println("Got id: ", sensor_id)
-	renderOk(w, getMeasurementsJson(sensor_id))
+	interval := r.FormValue("interval")
+	fmt.Println("Interval: " + interval)
+	renderOk(w, getMeasurementsJson(sensor_id, interval))
 }
 
 func sensorHandler(w http.ResponseWriter, r *http.Request) {
