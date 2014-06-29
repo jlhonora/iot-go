@@ -7,8 +7,8 @@ import (
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"strconv"
+	"time"
 )
 
 func Secret(user, realm string) string {

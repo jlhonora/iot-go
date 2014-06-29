@@ -1,26 +1,26 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
-	"time"
-	"database/sql"
 	"strings"
+	"time"
 )
 
 type Sensor struct {
-    Id			int		`json:"id"`
-    Type		string	`json:"type"`
-    Name		string	`json:"name"`
-    CreatedAt   time.Time	`json:"created_at"`
-    UpdatedAt   time.Time	`json:"updated_at"`
+	Id        int       `json:"id"`
+	Type      string    `json:"type"`
+	Name      string    `json:"name"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // Queries the database for sensors and transforms them
 // to struct format
 func getSensorsFromDb(sensor_ids []uint64) ([]Sensor, error) {
 	// Select all sensors
-	var rows * sql.Rows
+	var rows *sql.Rows
 	var err error
 	if sensor_ids == nil {
 		rows, err = DB.Query("SELECT * FROM sensors LIMIT 50")
