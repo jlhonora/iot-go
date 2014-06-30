@@ -30,18 +30,14 @@ func getQueryFromParams(sensor_id uint64, interval string, date string) string {
 	}
 	return `SELECT diff.period, SUM(diff.result) FROM (` +
 		`SELECT ` +
-		`DATE_TRUNC($2, interm.created_at + INTERVAL '12 hours') AS period, ` +
-		`interm.value - LAG(interm.value, 1, CAST(0 AS real)) OVER (ORDER BY interm.id) AS result ` +
-		`FROM ` +
-		`(` +
-		`SELECT * ` +
+		`DATE_TRUNC($2, created_at + INTERVAL '12 hours') AS period, ` +
+		`value - LAG(value, 1, CAST(0 AS real)) OVER (ORDER BY id) AS result ` +
 		`FROM measurements ` +
 		`WHERE sensor_id=$1 ` +
 		date_str +
-		`) interm ` +
 		`) diff ` +
 		`GROUP BY diff.period ` +
-		`ORDER BY period LIMIT ` + strconv.Itoa(QUERY_LIMIT)
+		`ORDER BY period DESC LIMIT ` + strconv.Itoa(QUERY_LIMIT)
 }
 
 func getQueryResultsFromParams(sensor_id uint64, interval string, date string) (*sql.Rows, error) {
