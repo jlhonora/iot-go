@@ -17,40 +17,48 @@ const (
 	QUERY_LIMIT = 10000
 )
 
-func getQueryFromParams(sensor_id uint64, interval string) string {
+func getQueryFromParams(sensor_id uint64, interval string, date string) string {
 	if interval == "" {
 		return "SELECT created_at, value FROM measurements WHERE sensor_id=$1 ORDER BY created_at DESC LIMIT " + strconv.Itoa(QUERY_LIMIT)
 	}
 	if interval == "peek" {
 		return "SELECT created_at, value FROM measurements WHERE sensor_id=$1 ORDER BY created_at DESC LIMIT 1"
 	}
-	return `SELECT diff.period, sum(diff.result) FROM (` +
+	date_str := ""
+	if date != "" && (interval == "hour" || interval == "minute") {
+		date_str = `AND (created_at + INTERVAL '12 hours') BETWEEN $3 AND ($3 + INTERVAL '24 hours')`
+	}
+	return `SELECT diff.period, SUM(diff.result) FROM (` +
 		`SELECT ` +
-		`date_trunc($2, interm.created_at + interval '6 hours') AS period, ` +
-		`interm.value - lag(interm.value, 1, CAST(0 AS real)) OVER (ORDER BY interm.id) AS result ` +
+		`DATE_TRUNC($2, interm.created_at + INTERVAL '12 hours') AS period, ` +
+		`interm.value - LAG(interm.value, 1, CAST(0 AS real)) OVER (ORDER BY interm.id) AS result ` +
 		`FROM ` +
 		`(` +
 		`SELECT * ` +
 		`FROM measurements ` +
 		`WHERE sensor_id=$1 ` +
+		date_str +
 		`) interm ` +
 		`) diff ` +
 		`GROUP BY diff.period ` +
 		`ORDER BY period LIMIT ` + strconv.Itoa(QUERY_LIMIT)
 }
 
-func getQueryResultsFromParams(sensor_id uint64, interval string) (*sql.Rows, error) {
-	sql := getQueryFromParams(sensor_id, interval)
+func getQueryResultsFromParams(sensor_id uint64, interval string, date string) (*sql.Rows, error) {
+	sql := getQueryFromParams(sensor_id, interval, date)
 	if interval == "" {
 		return DB.Query(sql, sensor_id)
+	}
+	if interval == "hour" || interval == "minute" {
+		return DB.Query(sql, sensor_id, interval, date)
 	}
 	return DB.Query(sql, sensor_id, interval)
 }
 
 // Queries the database for github activities and transforms them
 // to JSON format
-func getMeasurementsFromDb(sensor_id uint64, interval string) ([]Measurement, error) {
-	rows, err := getQueryResultsFromParams(sensor_id, interval)
+func getMeasurementsFromDb(sensor_id uint64, interval string, date string) ([]Measurement, error) {
+	rows, err := getQueryResultsFromParams(sensor_id, interval, date)
 	if err != nil {
 		fmt.Println(err)
 		return nil, err
@@ -72,8 +80,8 @@ func getMeasurementsFromDb(sensor_id uint64, interval string) ([]Measurement, er
 	return measurements, err
 }
 
-func getMeasurementsJson(sensor_id uint64, interval string) []byte {
-	measurements, err := getMeasurementsFromDb(sensor_id, interval)
+func getMeasurementsJson(sensor_id uint64, interval string, date string) []byte {
+	measurements, err := getMeasurementsFromDb(sensor_id, interval, date)
 	if err != nil {
 		fmt.Println(err)
 	}

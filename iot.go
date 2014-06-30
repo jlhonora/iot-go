@@ -125,7 +125,9 @@ func sensorMeasurementsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Got id: ", sensor_id)
 	interval := r.FormValue("interval")
 	fmt.Println("Interval: " + interval)
-	renderOk(w, getMeasurementsJson(sensor_id, interval))
+	date := r.FormValue("date")
+	fmt.Println("Date: " + date)
+	renderOk(w, getMeasurementsJson(sensor_id, interval, date))
 }
 
 func sensorHandler(w http.ResponseWriter, r *http.Request) {
