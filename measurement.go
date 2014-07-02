@@ -35,9 +35,10 @@ func getQueryFromParams(sensor_id uint64, interval string, date string) string {
 		`FROM measurements ` +
 		`WHERE sensor_id=$1 ` +
 		date_str +
+		` ORDER BY period DESC ` +
 		`) diff ` +
 		`GROUP BY diff.period ` +
-		`ORDER BY period DESC LIMIT ` + strconv.Itoa(QUERY_LIMIT)
+		`ORDER BY period ASC LIMIT ` + strconv.Itoa(QUERY_LIMIT)
 }
 
 func getQueryResultsFromParams(sensor_id uint64, interval string, date string) (*sql.Rows, error) {
