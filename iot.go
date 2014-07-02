@@ -45,6 +45,9 @@ func renderResponse(w http.ResponseWriter, status string, content []byte) {
 	if content != nil {
 		var content_iface interface{}
 		json.Unmarshal(content, &content_iface)
+		if content_iface == nil {
+			content_iface = string(content)
+		}
 		response = map[string]interface{}{
 			"status":   status,
 			"response": content_iface,
@@ -106,6 +109,9 @@ func iotHandler(w http.ResponseWriter, r *http.Request) {
 
 func sensorsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Handling sensors")
+	if !authOk(w, r) {
+		return
+	}
 	if r.Method == "GET" {
 		fmt.Println("Get")
 		renderOk(w, getSensorsJson(nil))
@@ -116,6 +122,9 @@ func sensorsHandler(w http.ResponseWriter, r *http.Request) {
 
 func sensorMeasurementsHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Handling sensor measurements")
+	if !authOk(w, r) {
+		return
+	}
 	vars := mux.Vars(r)
 	sensor_id, err := strconv.ParseUint(vars["id"], 10, 0)
 	if err != nil {
@@ -132,6 +141,9 @@ func sensorMeasurementsHandler(w http.ResponseWriter, r *http.Request) {
 
 func sensorHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Handling sensor")
+	if !authOk(w, r) {
+		return
+	}
 	vars := mux.Vars(r)
 	sensor_id, err := strconv.ParseUint(vars["id"], 10, 0)
 	if err != nil {
