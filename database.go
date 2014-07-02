@@ -40,14 +40,14 @@ func dbinit() error {
 	db, err := sql.Open("postgres", db_str)
 	if err != nil {
 		log.Println("Error opening database")
-		log.Println(err)
+		log.Fatal(err)
 	} else {
 		log.Println("DB opened")
 		DB = db
 	}
 	err = db.Ping()
 	if err != nil {
-		log.Println("Ping failed")
+		log.Fatal("Ping failed")
 	} else {
 		log.Println("Ping success")
 	}
