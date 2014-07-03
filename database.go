@@ -7,6 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"log"
 	"os"
+	"strings"
 )
 
 var DB *sql.DB
@@ -61,7 +62,8 @@ func dbclose() error {
 
 func getPassword(username string) string {
 	var password string
-	log.Printf("Querying password for " + username)
+	username = strings.TrimSpace(username)
+	log.Printf("Querying password for (%v)" + username, len(username))
 	err := DB.QueryRow("SELECT key FROM users WHERE name = $1", username).Scan(&password)
 	switch {
 	case err == sql.ErrNoRows:
@@ -78,7 +80,8 @@ func getPassword(username string) string {
 }
 
 func checkKey(key string, method string) bool {
-	log.Printf("Querying key " + key + " with method " + method)
+	log.Printf("Querying key %v (%v) with method %v", key, len(key), method)
+	key = strings.TrimSpace(key)
 	var name string
 	err := DB.QueryRow("SELECT name FROM users WHERE key = $1", key).Scan(&name)
 	switch {
@@ -86,7 +89,7 @@ func checkKey(key string, method string) bool {
 		log.Printf("Not found")
 		return false
 	case err != nil:
-		log.Fatal(err)
+		log.Println(err)
 		return false
 	default:
 		log.Printf("OK")
