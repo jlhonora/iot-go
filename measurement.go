@@ -26,11 +26,11 @@ func getQueryFromParams(sensor_id uint64, interval string, date string) string {
 	}
 	date_str := ""
 	if date != "" && (interval == "hour" || interval == "minute") {
-		date_str = `AND (created_at + INTERVAL '12 hours') BETWEEN $3 AND ($3 + INTERVAL '24 hours')`
+		date_str = `AND (created_at - INTERVAL '1 days') BETWEEN $3 AND ($3 + INTERVAL '1 days')`
 	}
 	return `SELECT diff.period, SUM(diff.result) FROM (` +
 		`SELECT ` +
-		`DATE_TRUNC($2, created_at + INTERVAL '12 hours') AS period, ` +
+		`DATE_TRUNC($2, created_at) AS period, ` +
 		`value - LAG(value, 1, CAST(0 AS real)) OVER (ORDER BY id) AS result ` +
 		`FROM measurements ` +
 		`WHERE sensor_id=$1 ` +

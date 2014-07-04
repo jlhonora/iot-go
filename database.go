@@ -63,7 +63,7 @@ func dbclose() error {
 func getPassword(username string) string {
 	var password string
 	username = strings.TrimSpace(username)
-	log.Printf("Querying password for (%v)" + username, len(username))
+	log.Printf("Querying password for (%v)"+username, len(username))
 	err := DB.QueryRow("SELECT key FROM users WHERE name = $1", username).Scan(&password)
 	switch {
 	case err == sql.ErrNoRows:
